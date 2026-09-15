@@ -1,0 +1,62 @@
+export default {
+  datepicker: {
+    now: 'Now',
+    today: 'Today',
+    cancel: 'Cancel',
+    clear: 'Clear',
+    confirm: 'OK',
+    selectDate: 'Select date',
+    selectTime: 'Select time',
+    startDate: 'Start Date',
+    startTime: 'Start Time',
+    endDate: 'End Date',
+    endTime: 'End Time',
+    prevYear: 'Previous Year',
+    nextYear: 'Next Year',
+    prevMonth: 'Previous Month',
+    nextMonth: 'Next Month',
+    year: '',
+    month1: 'Jan.',
+    month2: 'Feb.',
+    month3: 'Mar.',
+    month4: 'Apr.',
+    month5: 'May.',
+    month6: 'Jun.',
+    month7: 'Jul.',
+    month8: 'Aug.',
+    month9: 'Sep.',
+    month10: 'Oct.',
+    month11: 'Nov.',
+    month12: 'Dec.',
+    week: 'week',
+    weeks: {
+      sun: 'Sun',
+      mon: 'Mon',
+      tue: 'Tue',
+      wed: 'Wed',
+      thu: 'Thu',
+      fri: 'Fri',
+      sat: 'Sat'
+    },
+    months: {
+      jan: 'Jan.',
+      feb: 'Feb.',
+      mar: 'Mar.',
+      apr: 'Apr.',
+      may: 'May.',
+      jun: 'Jun.',
+      jul: 'Jul.',
+      aug: 'Aug.',
+      sep: 'Sep.',
+      oct: 'Oct.',
+      nov: 'Nov.',
+      dec: 'Dec.'
+    }
+  },
+  pagination: {
+    goto: 'Go to',
+    pagesize: '/Page',
+    total: 'Total {total}',
+    pageClassifier: ''
+  }
+}

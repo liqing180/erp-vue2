@@ -1,0 +1,168 @@
+diff --git a/node_modules/element-ui/lib/element-ui.common.js b/node_modules/element-ui/lib/element-ui.common.js
+index 25d11ab..f8e36fb 100644
+--- a/node_modules/element-ui/lib/element-ui.common.js
++++ b/node_modules/element-ui/lib/element-ui.common.js
+@@ -1624,7 +1624,7 @@ var autocompletevue_type_template_id_152f2ee6_render = function() {
+                   ) {
+                     return null
+                   }
+-                  return _vm.close($event)
++                  return _vm.handleTabKey($event)
+                 }
+               ]
+             }
+@@ -1674,6 +1674,9 @@ var autocompletevue_type_template_id_152f2ee6_render = function() {
+                 "aria-selected": _vm.highlightedIndex === index
+               },
+               on: {
++                mouseenter: function($event) {
++                  _vm.hoverItem(index)
++                },
+                 click: function($event) {
+                   _vm.select(item)
+                 }
+@@ -2103,6 +2106,13 @@ var focus_default = /*#__PURE__*/__webpack_require__.n(focus_);
+       this.activated = false;
+       this.$emit('clear');
+     },
++		
++		handleTabKey: function handleTabKey(e) {
++			if (!(this.value || '').trim() && this.suggestionVisible && this.highlightedIndex >= 0 && this.highlightedIndex < this.suggestions.length) {
++        this.select(this.suggestions[this.highlightedIndex]);
++      }
++      this.activated = false;
++    },
+     close: function close(e) {
+       this.activated = false;	
+     },
+@@ -2158,6 +2168,11 @@ var focus_default = /*#__PURE__*/__webpack_require__.n(focus_);
+       var $input = this.getInput();
+       $input.setAttribute('aria-activedescendant', this.id + '-item-' + this.highlightedIndex);
+     },
++		hoverItem: function hoverItem(index) {
++      if (!this.suggestionVisible || this.loading) { return; }
++      this.highlightedIndex = index;
++    },
++
+     getInput: function getInput() {
+       return this.$refs.input.getInput();
+     }
+@@ -7607,7 +7622,7 @@ var selectvue_type_template_id_0e4aade6_render = function() {
+                           ) {
+                             return null
+                           }
+-                          _vm.visible = false
++                          _vm.handleTabKey($event)
+                         }
+                       ],
+                       compositionstart: _vm.handleComposition,
+@@ -7712,7 +7727,7 @@ var selectvue_type_template_id_0e4aade6_render = function() {
+                 ) {
+                   return null
+                 }
+-                _vm.visible = false
++                _vm.handleTabKey($event)
+               }
+             ],
+             mouseenter: function($event) {
+@@ -7828,6 +7843,10 @@ var selectvue_type_template_id_0e4aade6_render = function() {
+                     _vm.$slots.empty
+                       ? _vm._t("empty")
+                       : _c("p", { staticClass: "el-select-dropdown__empty" }, [
++                          _vm.loading ? _c("i", {
++                            staticClass:
++                              "el-icon-loading",
++                          }) : _vm._e(),
+                           _vm._v(
+                             "\n          " +
+                               _vm._s(_vm.emptyText) +
+@@ -8548,7 +8567,10 @@ var scroll_into_view_default = /*#__PURE__*/__webpack_require__.n(scroll_into_vi
+     size: String,
+     disabled: Boolean,
+     clearable: Boolean,
+-    filterable: Boolean,
++    filterable: {
++      type: Boolean,
++      default: true
++    },
+     allowCreate: Boolean,
+     loading: Boolean,
+     popperClass: String,
+@@ -9022,6 +9044,35 @@ var scroll_into_view_default = /*#__PURE__*/__webpack_require__.n(scroll_into_vi
+         }
+       }
+     },
++		/* 处理 Tab 键,补丁包自定义方法 */
++		handleTabKey: function handleTabKey() {
++			var isValueEmpty = !this.value || (Array.isArray(this.value) && this.value.length === 0);
++  		// 过滤出：可见、未禁用、未被分组禁用的有效选项
++  		var validOptions = this.options.filter(function(opt) {
++  		  return opt.visible && !opt.disabled && !opt.groupDisabled;
++  		});
++			if (this.visible && isValueEmpty && validOptions.length > 0) {
++				var target = null;
++				// 优先取当前高亮项（需确保高亮项有效）
++				if (
++					this.hoverIndex > -1 &&
++					this.options[this.hoverIndex] &&
++					this.options[this.hoverIndex].visible &&
++					!this.options[this.hoverIndex].disabled &&
++					!this.options[this.hoverIndex].groupDisabled
++				) {
++					target = this.options[this.hoverIndex];
++				} else {
++					// 无有效高亮项，取第一个可用选项
++					target = validOptions[0];
++				}
++				if (target) {
++					this.handleOptionSelect(target);
++				}
++			}
++			this.visible = false
++    },
++
+     deleteSelected: function deleteSelected(event) {
+       event.stopPropagation();
+       var value = this.multiple ? [] : '';
+@@ -11352,7 +11403,8 @@ var table_layout_TableLayout = function () {
+     if (this.table.$el && bodyWrapper) {
+       var body = bodyWrapper.querySelector('.el-table__body');
+       var prevScrollY = this.scrollY;
+-      var scrollY = body.offsetHeight > this.bodyHeight;
++      var scrollY = body.offsetHeight - this.bodyHeight > 1.2;
++			
+       this.scrollY = scrollY;
+       return prevScrollY !== scrollY;
+     }
+@@ -11914,7 +11966,7 @@ var table_body_extends = Object.assign || function (target) { for (var i = 1; i
+ 
+       // 判断是否text-overflow, 如果是就显示tooltip
+       var cellChild = event.target.querySelector('.cell');
+-      if (!(Object(dom_["hasClass"])(cellChild, 'el-tooltip') && cellChild.childNodes.length)) {
++      if (!(Object(dom_["hasClass"])(cellChild, 'el-tooltip') && cellChild.childNodes.length && (cellChild.textContent || '').trim())) {
+         return;
+       }
+       // use range width instead of scrollWidth to determine whether the text is overflowing
+@@ -29199,8 +29251,9 @@ upload_draggervue_type_template_id_7ebbf219_render._withStripped = true
+         }).filter(function (type) {
+           return type;
+         }).some(function (acceptedType) {
++					const acceptedTypeL = acceptedType.toLowerCase()
+           if (/\..+$/.test(acceptedType)) {
+-            return extension === acceptedType;
++            return extension.toLowerCase() === acceptedTypeL;
+           }
+           if (/\/\*$/.test(acceptedType)) {
+             return baseType === acceptedType.replace(/\/\*$/, '');
+@@ -33642,7 +33695,10 @@ var InputSizeMap = {
+     },
+     disabled: Boolean,
+     clearable: Boolean,
+-    filterable: Boolean,
++		filterable: {
++      type: Boolean,
++      default: true
++    },
+     filterMethod: Function,
+     separator: {
+       type: String,

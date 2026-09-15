@@ -1,0 +1,49 @@
+.flex {
+  display: flex;
+	align-items: flex-start;
+}
+.flexStart {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+}
+.flexEnd {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+.flexCen {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.flexSa {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+}
+.flexSb {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.flexCsb {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.flexCol {
+	display: flex;
+	flex-direction: column;
+}
+.flexCCen {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
+.flex-1 {
+	flex: 1;
+}
+.fs-0 {
+	flex-shrink: 0;
+}

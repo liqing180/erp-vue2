@@ -1,0 +1,297 @@
+// cover some element-ui styles
+
+.el-breadcrumb__inner,
+.el-breadcrumb__inner a {
+  font-weight: 400 !important;
+}
+
+.el-upload {
+  input[type='file'] {
+    display: none !important;
+  }
+}
+
+.el-upload__input {
+  display: none;
+}
+
+.cell {
+  .el-tag {
+    margin-right: 0px;
+  }
+}
+
+.small-padding {
+  .cell {
+    padding-left: 5px;
+    padding-right: 5px;
+  }
+}
+
+.fixed-width {
+  .el-button--mini {
+    padding: 7px 10px;
+    width: 60px;
+  }
+}
+
+.status-col {
+  .cell {
+    padding: 0 10px;
+    text-align: center;
+
+    .el-tag {
+      margin-right: 0px;
+    }
+  }
+}
+
+// to fixed https://github.com/ElemeFE/element/issues/2461
+.el-dialog {
+  transform: none;
+  left: 0;
+  position: relative;
+  margin: 0 auto;
+}
+
+// refine element ui upload
+.upload-container {
+  .el-upload {
+    width: 100%;
+
+    .el-upload-dragger {
+      width: 100%;
+      height: 200px;
+    }
+  }
+}
+
+// dropdown
+.el-dropdown-menu {
+  a {
+    display: block;
+  }
+}
+
+// fix date-picker ui bug in filter-item
+.el-range-editor.el-input__inner {
+  display: inline-flex !important;
+}
+
+// to fix el-date-picker css style
+.el-range-separator {
+  box-sizing: content-box;
+}
+
+.el-menu--collapse > div > .el-submenu > .el-submenu__title .el-submenu__icon-arrow {
+  display: none;
+}
+.el-badge__content {
+  border: none !important;
+}
+
+.el-form-item--mini.el-form-item .el-form-item {
+  margin-bottom: 0px;
+}
+.el-form-item--small.el-form-item .el-form-item {
+  margin-bottom: 0px;
+}
+
+.el-cascader-panel,
+.el-select-dropdown,
+.el-cascader-menu {
+  max-width: 70vw;
+}
+
+.el-dropdown-menu {
+  max-width: 50vw;
+}
+
+/* 大 */
+.app-size--medium {
+  .el-form-item__label {
+    font-size: 14px !important;
+  }
+  .el-button--mini:not(.el-button--text) {
+    font-size: 14px !important;
+  }
+}
+.el-table--small {
+  font-size: 14px !important;
+}
+.el-input--small {
+  font-size: 14px !important;
+}
+
+/* 中 */
+.app-size--small {
+  .el-form-item__label {
+    font-size: 13px !important;
+  }
+  .el-button--mini:not(.el-button--text) {
+    font-size: 13px !important;
+  }
+}
+.el-table--small {
+  font-size: 13px !important;
+}
+.el-input--small {
+  font-size: 13px !important;
+}
+
+/* 小 */
+.app-size--mini {
+  .el-form-item__label {
+    font-size: 12px !important;
+  }
+  .el-button--mini:not(.el-button--text) {
+    font-size: 12px !important;
+  }
+}
+.el-table--mini {
+  font-size: 12px !important;
+}
+.el-input--mini {
+  font-size: 12px !important;
+}
+
+.el-table .el-table__cell {
+  padding: 6px 0;
+}
+.el-table th.el-table__cell > .cell {
+  padding-left: 6px;
+  padding-right: 6px;
+}
+.el-table-column--selection .cell {
+  padding: 0 10px !important;
+}
+
+.el-table {
+  .el-table__header-wrapper,
+  .el-table__fixed-header-wrapper {
+    th {
+      word-break: break-word;
+      background-color: #f8f8f9;
+      color: #515a6e;
+      height: 32px;
+      padding: 1px 0;
+      font-weight: normal;
+    }
+  }
+  .el-table__body-wrapper {
+    .el-button [class*='el-icon-'] + span {
+      margin-left: 1px;
+    }
+    scrollbar-width: thin;
+  }
+
+  .el-table__body-wrapper::-webkit-scrollbar-thumb {
+    // border: 2px solid #ededed;
+    background: #c1c1c1;
+  }
+  .el-table__body-wrapper::-webkit-scrollbar-corner {
+    // border: 2px solid #ededed;
+    background: #dcdcdc;
+  }
+}
+
+.browser--chrome,
+.browser--edg,
+.browser--opr,
+.browser--safari,
+.browser--unknown {
+  .el-table__body-wrapper::-webkit-scrollbar {
+    width: 8px; /* 纵向滚动条的宽 */
+    height: 8px; /* 横向滚动条的高 */
+    background: #fff;
+    border: 1px solid #ededed;
+  }
+}
+.browser--firefox {
+  .el-table__body-wrapper::-webkit-scrollbar {
+    // width: 8px; /* 纵向滚动条的宽 */
+    // height: 8px; /* 横向滚动条的高 */
+    background: #fff;
+    border: 1px solid #ededed;
+  }
+}
+
+.browser--firefox .el-table--scrollable-x {
+  > .el-table__fixed,
+  > .el-table__fixed-right {
+    height: calc(100% - 6px) !important;
+    // height: 100%;
+  }
+
+  > .el-table__fixed > .el-table__fixed-body-wrapper,
+  > .el-table__fixed-right > .el-table__fixed-body-wrapper {
+    bottom: 0;
+    max-height: none !important;
+  }
+}
+/* 修复固定列高度计算bug
+  从有滚动条的表格切换到无滚动条的表格,
+  固定列高度会少了 18px
+*/
+.el-table__fixed {
+  height: 100% !important;
+}
+.el-table--scrollable-x .el-table__fixed {
+  height: calc(100% - 8px) !important;
+  background: #fff;
+}
+.el-table__fixed-right {
+  height: 100% !important;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.12) !important;
+}
+.el-table--scrollable-x .el-table__fixed-right {
+  height: calc(100% - 8px) !important;
+  background: #fff;
+}
+
+.el-table--scrollable-y .el-table__fixed-right {
+  right: 8px !important;
+}
+
+.el-input__inner {
+  font-size: 12px;
+}
+.el-form-item__label {
+  // font-size: 12px;
+  font-weight: normal;
+}
+.el-range-input {
+  font-size: 12px !important;
+}
+/* 解决表单同个el-row 内存在多行 el-col 时布局异常问题 */
+.el-row-flex {
+  display: flex; //设置布局
+  flex-wrap: wrap; //进行换行操作
+}
+
+/* 多选与单选框置灰时显示淡蓝色 */
+.el-checkbox__input.is-disabled.is-checked {
+  .el-checkbox__inner {
+    background-color: #61acf7;
+    border-color: #61acf7;
+  }
+  .el-checkbox__inner::after {
+    border-color: #ffffff;
+  }
+}
+.el-checkbox__input.is-disabled.is-checked + span.el-checkbox__label {
+  color: #61acf7;
+}
+
+.el-radio__input.is-disabled.is-checked .el-radio__inner {
+  border-color: #61acf7;
+  background: #61acf7;
+}
+
+.el-radio__input.is-disabled.is-checked .el-radio__inner::after {
+  background-color: #f5f7fa;
+}
+
+.el-radio__input.is-disabled.is-checked + span.el-radio__label {
+  color: #61acf7;
+}

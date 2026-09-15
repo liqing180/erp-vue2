@@ -1,0 +1,275 @@
+@import './variables.scss';
+@import './mixin.scss';
+@import './transition.scss';
+@import './element-ui.scss';
+@import './sidebar.scss';
+@import './btn.scss';
+@import './flex.css';
+
+body {
+  height: 100%;
+  font-size: 16px;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  font-family: 'Microsoft YaHei', 'Microsoft YaHei UI', sans-serif;
+}
+
+label {
+  font-weight: 700;
+}
+
+html {
+  height: 100%;
+  box-sizing: border-box;
+}
+
+#app {
+  height: 100%;
+}
+
+*,
+*:before,
+*:after {
+  box-sizing: inherit;
+}
+
+.no-padding {
+  padding: 0px !important;
+}
+
+.padding-content {
+  padding: 4px 0;
+}
+
+a:focus,
+a:active {
+  outline: none;
+}
+
+a,
+a:focus,
+a:hover {
+  cursor: pointer;
+  color: inherit;
+  text-decoration: none;
+}
+
+div:focus {
+  outline: none;
+}
+
+.fr {
+  float: right;
+}
+
+.fl {
+  float: left;
+}
+
+.pr-5 {
+  padding-right: 5px;
+}
+
+.pl-5 {
+  padding-left: 5px;
+}
+.pl-20 {
+  padding-left: 20px !important;
+}
+
+.block {
+  display: block;
+}
+
+.pointer {
+  cursor: pointer;
+}
+
+.inlineBlock {
+  display: inline-block;
+}
+.user-select-none {
+  user-select: none;
+}
+
+
+.clearfix {
+  &:after {
+    visibility: hidden;
+    display: block;
+    font-size: 0;
+    content: ' ';
+    clear: both;
+    height: 0;
+  }
+}
+
+aside {
+  background: #eef1f6;
+  padding: 8px 24px;
+  margin-bottom: 20px;
+  border-radius: 2px;
+  display: block;
+  line-height: 32px;
+  font-size: 16px;
+  color: #2c3e50;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  a {
+    color: #337ab7;
+    cursor: pointer;
+
+    &:hover {
+      color: rgb(32, 160, 255);
+    }
+  }
+}
+
+//main-container全局样式
+.app-container {
+  padding: 20px;
+}
+
+.components-container {
+  margin: 30px 50px;
+  position: relative;
+}
+
+
+.text-center {
+  text-align: center;
+}
+
+.sub-navbar {
+  height: 50px;
+  line-height: 50px;
+  position: relative;
+  width: 100%;
+  text-align: right;
+  padding-right: 20px;
+  transition: 600ms ease position;
+  background: linear-gradient(
+    90deg,
+    rgba(32, 182, 249, 1) 0%,
+    rgba(32, 182, 249, 1) 0%,
+    rgba(33, 120, 241, 1) 100%,
+    rgba(33, 120, 241, 1) 100%
+  );
+
+  .subtitle {
+    font-size: 20px;
+    color: #fff;
+  }
+
+  &.draft {
+    background: #d0d0d0;
+  }
+
+  &.deleted {
+    background: #d0d0d0;
+  }
+}
+
+.link-type,
+.link-type:focus {
+  color: #1890FF;
+  cursor: pointer;
+
+  &:hover {
+    color: #46a6ff;
+  }
+}
+
+.filter-container {
+  padding-bottom: 10px;
+
+  .filter-item {
+    display: inline-block;
+    vertical-align: middle;
+    margin-bottom: 10px;
+  }
+}
+
+//refine vue-multiselect plugin
+.multiselect {
+  line-height: 16px;
+}
+
+.multiselect--active {
+  z-index: 1000 !important;
+}
+.select-left-text {
+  max-width: 50%;
+  float: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.select-right-text {
+  max-width: 48%;
+  float: right;
+  color: #8492a6;
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cascader-left-text {
+  // max-width: 500px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cascader-right-text {
+  position: absolute;
+  right: 14px;
+  top: 0;
+  color: #8492a6;
+}
+
+.ellipsis-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* 弹窗适配小屏高度 src/assets/styles/ruoyi.scss .dialog-content-height */
+/* 修复火狐浏览器级联下拉框出现左右滚动条问题 */
+.hide-cascader-scrollbar .el-scrollbar__wrap {
+  // box-sizing: border-box;
+  overflow-x: hidden !important;
+  margin-bottom: 0 !important;
+}
+
+/* 隐藏表格表头全选框 */
+.hide-check-all {
+  th.el-table-column--selection .cell .el-checkbox__inner {
+    display: none;
+    position: relative;
+  }
+}
+.hide-check-all {
+  th.el-table-column--selection .cell:before {
+    content: '';
+    position: absolute;
+  }
+}
+.hide-row-check {
+	.el-table-column--selection .cell .el-checkbox__inner {
+    display: none;
+    position: relative;
+  }
+}
+.hide-row-check {
+  .el-table-column--selection .cell:before {
+    content: '';
+    position: absolute;
+  }
+}
+
+.department-data {
+  position: absolute; left: 40px; top: 12px;
+  .el-checkbox__label {
+    font-size: 12px;
+  }
+}

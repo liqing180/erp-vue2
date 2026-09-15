@@ -1,0 +1,990 @@
+<template>
+  <div>
+    <search-form
+      ref="searchForm"
+      v-model="queryParams"
+      :searchData="searchData"
+      :handleQuery="handleSearchForm"
+      :resetQuery="resetSearchForm"
+      :showCustom="false"
+      :showMenu="false"
+      :interval="500"
+    >
+      <right-toolbar
+        :saveKey="saveKey"
+        :savePath="savePath"
+        :showRefreshBtn="true"
+        @queryTable="queryTable"
+        :columns="configColumn"
+        :columnsInit="columns"
+      ></right-toolbar>
+    </search-form>
+
+    <div class="mt20" style="display: flex; align-items: flex-start" v-loading="loading">
+      <div class="tree-box" :style="{ width: isCollapse ? '2px' : '300px' }">
+        <el-input
+          :placeholder="$t('menu.productCategory')"
+          :class="{ 'tree-box-input': isCollapse }"
+          v-model="filterText"
+          @input="handleFilter"
+          clearable
+          style="padding: 10px"
+        >
+        </el-input>
+        <div class="tree">
+          <el-tree
+            ref="tree"
+            :data="filteredTreeData"
+            :props="defaultProps"
+            :expand-on-click-node="false"
+            node-key="id"
+            @node-click="handleNodeClick"
+            :default-expand-all="defaultExpandAll"
+            :default-expanded-keys="defaultExpandedKeys"
+            :key="timeStamp"
+          >
+            <span
+              slot-scope="{ node, data }"
+              :class="['flow1', data.id === queryParams.productCategoryId ? 'label-current' : '']"
+              :title="node.label"
+            >
+              {{ node.label }}
+            </span>
+          </el-tree>
+        </div>
+        <div class="collapse-warp">
+          <i
+            :class="isCollapse === true ? 'el-icon-d-arrow-right' : 'el-icon-d-arrow-left'"
+            @click="isCollapse = !isCollapse"
+          ></i>
+        </div>
+        <div class="menu-resize" :data-collapse="isCollapse" v-dragTree v-show="!isCollapse"></div>
+      </div>
+      <div class="w100" style="overflow: hidden">
+        <el-table
+          border
+          ref="tables"
+          :data="tableList"
+          :max-height="tableMaxHeight"
+          @sort-change="handleSortChange"
+          @row-click="handleRowClick"
+          :row-class-name="'pointer'"
+          @select="handleSelectionChange"
+          @select-all="handleSelectAll"
+        >
+          <el-table-column type="selection" width="55" :selectable="selectable" align="center" />
+          <el-table-column type="index" :label="$t('ui.sn')" width="60" fixed="left" align="center">
+            <template slot-scope="scope">
+              <span>{{ scope.$index + (queryParams.pageNum - 1) * queryParams.pageSize + 1 }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column
+            v-for="item in visibleColumn"
+            :key="item.prop + item.colSortIndex"
+            :prop="item.prop"
+            :label="item.label"
+            :width="item.width"
+            :min-width="getMinWidth(item)"
+            :show-overflow-tooltip="item.tooltip"
+            :fixed="item.fixed"
+            :sortable="item.sortable"
+            :align="item.align || 'left'"
+            header-align="center"
+          >
+            <template slot-scope="scope">
+              <template v-if="item.prop === 'isActive'">
+                <el-tag v-if="scope.row.isActive === '1'">{{ $t('uiBtn.active') }}</el-tag>
+                <el-tag v-if="scope.row.isActive === '0'" type="danger">{{
+                  $t('uiBtn.inactive')
+                }}</el-tag>
+              </template>
+              <template v-else-if="item.prop === 'productName'">
+                <commonProductAndPicture :row="scope.row" />
+              </template>
+              <template v-else-if="item.prop === 'picture'">
+                <div v-if="scope.row.defaultImageUrl" style="line-height: 0; height: 30px">
+                  <el-image
+                    style="height: 100%"
+                    :src="scope.row.defaultImageUrl"
+                    :preview-src-list="[scope.row.defaultImageUrl]"
+                  />
+                </div>
+              </template>
+              <template v-else-if="item.prop === 'valuationAmount'">{{
+                $numberStr(scope.row.valuationAmount, 2)
+              }}</template>
+              <template v-else-if="item.prop === 'qtyOnHand'">
+                <TableNonInventoryItem v-if="scope.row.nonInventoryItem === '1'" />
+
+                <template v-else>{{
+                  $numberStr(scope.row[item.prop], scope.row.decimalNum)
+                }}</template>
+              </template>
+              <template v-else-if="item.prop === 'availableQty'">
+                <TableNonInventoryItem v-if="scope.row.nonInventoryItem === '1'" />
+
+                <template v-else>{{
+                  $numberStr(scope.row[item.prop], scope.row.decimalNum)
+                }}</template>
+              </template>
+              <template v-else-if="item.prop === 'reservedQty'">
+                <TableNonInventoryItem v-if="scope.row.nonInventoryItem === '1'" />
+
+                <template v-else>{{
+                  $numberStr(scope.row[item.prop], scope.row.decimalNum)
+                }}</template>
+              </template>
+              <template v-else-if="item.prop === 'inTransitQty'">
+                <TableNonInventoryItem v-if="scope.row.nonInventoryItem === '1'" />
+
+                <template v-else>{{
+                  $numberStr(scope.row[item.prop], scope.row.decimalNum)
+                }}</template>
+              </template>
+              <template v-else-if="item.prop === 'inventoryUom'">
+                <span :title="showUomLabel(scope.row[item.prop])">{{ scope.row[item.prop] }}</span>
+              </template>
+              <template v-else-if="item.prop === 'categoryNameShowStr'">
+                <ToolTipShowCategory :list="scope.row.categoryNameList || []">
+                  <div class="flow1">{{ scope.row[item.prop] }}</div>
+                </ToolTipShowCategory>
+              </template>
+              <template v-else-if="item.prop === 'description'">
+                <DescriptionToolTipShow :showStr="scope.row[item.prop]" />
+              </template>
+              <template v-else-if="item.prop === 'remarks'">
+                <DescriptionToolTipShow :showStr="scope.row[item.prop]" />
+              </template>
+              <template v-else>{{ scope.row[item.propBy || item.prop] }}</template>
+            </template>
+          </el-table-column>
+        </el-table>
+        <pagination
+          :selectedNum="
+            $$getFilteredSelectedNum(
+              filteredSelectedList,
+              tableList,
+              activeName === '1' ? selectList1 : selectList2,
+              rowIdKey
+            )
+          "
+          :saveKey="saveKey"
+          :savePath="savePath"
+          v-show="total > 0"
+          :total="total"
+          :page.sync="queryParams.pageNum"
+          :limit.sync="queryParams.pageSize"
+          @pagination="getList"
+        />
+      </div>
+    </div>
+
+    <!-- <div slot="footer" class="dialog-footer">
+      <el-button type="ghost" @click="handleBack">{{ $t('ui.back') }}</el-button>
+      <el-button type="primary" @click="submit">{{ $t('uiBtn.save') }} </el-button>
+    </div> -->
+  </div>
+</template>
+
+<script>
+import pageMixin from '@/mixins/tableMinx'
+import {
+  queryBusinessSelectProductCategoryTreeList,
+  queryBusinessSelectServiceCategoryTreeList
+} from '@/api/productManagement/productCategory'
+import { queryRFQCanSelectProductList } from '@/api/purchaseManagement/requestForQuotation'
+
+export default {
+  directives: {},
+  dicts: ['service_type'],
+  mixins: [pageMixin],
+  props: {
+    warehouseId: {
+      type: String,
+      default: ''
+    },
+    rfqVendorList: {
+      type: Array,
+      default() {
+        return []
+      }
+    }
+  },
+  inject: {
+    elForm: {
+      default: ''
+    },
+    elFormItem: {
+      default: ''
+    }
+  },
+  data() {
+    const vm = this
+    return {
+      saveKey: '40',
+      savePath: 'purchaseMTable',
+      searchFormKey: Date.now(),
+      loading: false,
+      // 显示搜索条件
+      showSearch: true,
+      // 总条数
+      total: 0,
+      // 角色表格数据
+      rowIdKey: 'productId',
+      tableList: [],
+      filteredSelectedList: [],
+      // 非单个禁用
+      single: true,
+      // 非多个禁用
+      multiple: true,
+      selectList: [],
+      selectList1: [],
+      selectList2: [],
+      visible: false,
+      columns: [
+        {
+          prop: 'productName',
+          label: vm.$t('PURCHASE.productName'),
+          visible: true,
+          minWidth: 200,
+          tooltip: false,
+          sortable: 'custom',
+          padding: 70,
+          fixed: true
+        },
+        {
+          prop: 'internalPartNo',
+          label: vm.$t('PURCHASE.internalPartNo'),
+          visible: true,
+          minWidth: 200,
+          tooltip: true,
+          sortable: 'custom'
+        },
+        {
+          prop: 'description',
+          label: vm.$t('ui.description'),
+          visible: true,
+          minWidth: 200,
+          tooltip: false
+        },
+        {
+          prop: 'remarks',
+          label: vm.$t('ui.remarks'),
+          visible: true,
+          minWidth: 200,
+          tooltip: false
+        },
+        // {
+        //   prop: 'partNo',
+        //   label: vm.$t('PURCHASE.partNo'),
+        //   visible: true,
+        //   minWidth: 200,
+        //   tooltip: true,
+        //   sortable: 'custom'
+        // },
+        {
+          prop: 'alias',
+          label: vm.$t('PURCHASE.alias'),
+          visible: true,
+          minWidth: 200,
+          tooltip: true
+        },
+        {
+          prop: 'inventoryUom',
+          label: vm.$t('PURCHASE.uom'),
+          visible: true,
+          minWidth: 200,
+          tooltip: true,
+          sortable: 'custom'
+        },
+        {
+          prop: 'categoryNameShowStr',
+          label: vm.$t('PRODUCT.productCategory1'),
+          visible: true,
+          minWidth: 200
+          // tooltip: true
+        },
+        {
+          prop: 'isActive',
+          label: vm.$t('ui.isActive'),
+          visible: true,
+          minWidth: 160,
+          tooltip: true
+        },
+        {
+          prop: 'qtyOnHand',
+          label: vm.$t('PURCHASE.qTYOnHand'),
+          visible: true,
+          minWidth: 200,
+          padding: 60,
+          tooltip: true
+        },
+        {
+          prop: 'availableQty',
+          label: vm.$t('PURCHASE.availableQTY'),
+          visible: true,
+          minWidth: 200,
+          padding: 60,
+          tooltip: true
+        },
+        {
+          prop: 'reservedQty',
+          label: vm.$t('PURCHASE.reservedQTY'),
+          visible: true,
+          minWidth: 200,
+          padding: 60,
+          tooltip: true
+        },
+        /* {
+          prop: 'unqualifiedQTY',
+          label: vm.$t('PURCHASE.unqualifiedQTY'),
+          visible: true,
+          minWidth: 200,
+          tooltip: true
+        }, */
+        {
+          prop: 'inTransitQty',
+          label: vm.$t('PURCHASE.inTransitQTY'),
+          visible: true,
+          minWidth: 200,
+          padding: 60,
+          tooltip: true
+        }
+        // {
+        //   prop: 'picture',
+        //   label: vm.$t('ui.picture'),
+        //   visible: true,
+        //   width: 120
+        // }
+      ],
+      columns1: [
+        {
+          prop: 'productName',
+          label: vm.$t('PURCHASE.productName'),
+          visible: true,
+          minWidth: 200,
+          tooltip: true,
+          sortable: 'custom',
+          padding: 70,
+          fixed: true
+        },
+        {
+          prop: 'internalPartNo',
+          label: vm.$t('PURCHASE.internalPartNo'),
+          visible: true,
+          minWidth: 200,
+          tooltip: true,
+          sortable: 'custom'
+        },
+        {
+          prop: 'brand',
+          label: vm.$t('PURCHASE.brand'),
+          visible: true,
+          minWidth: 200,
+          tooltip: true,
+          sortable: 'custom'
+        },
+        {
+          prop: 'description',
+          label: vm.$t('ui.description'),
+          visible: true,
+          minWidth: 200,
+          tooltip: false
+        },
+        {
+          prop: 'remarks',
+          label: vm.$t('ui.remarks'),
+          visible: true,
+          minWidth: 200,
+          tooltip: false
+        },
+        // {
+        //   prop: 'partNo',
+        //   label: vm.$t('PURCHASE.partNo'),
+        //   visible: true,
+        //   minWidth: 200,
+        //   tooltip: true,
+        //   sortable: 'custom'
+        // },
+        {
+          prop: 'alias',
+          label: vm.$t('PURCHASE.alias'),
+          visible: true,
+          minWidth: 200,
+          tooltip: true
+        },
+        {
+          prop: 'inventoryUom',
+          label: vm.$t('PURCHASE.uom'),
+          visible: true,
+          minWidth: 200,
+          tooltip: true,
+          sortable: 'custom'
+        },
+        {
+          prop: 'categoryNameShowStr',
+          label: vm.$t('PRODUCT.productCategory1'),
+          visible: true,
+          minWidth: 200
+          // tooltip: true
+        },
+        {
+          prop: 'isActive',
+          label: vm.$t('ui.isActive'),
+          visible: true,
+          minWidth: 160,
+          tooltip: true
+        },
+        {
+          prop: 'qtyOnHand',
+          label: vm.$t('PURCHASE.qTYOnHand'),
+          visible: true,
+          minWidth: 200,
+          tooltip: true
+        },
+        {
+          prop: 'availableQty',
+          label: vm.$t('PURCHASE.availableQTY'),
+          visible: true,
+          minWidth: 200,
+          tooltip: true
+        },
+        {
+          prop: 'reservedQty',
+          label: vm.$t('PURCHASE.reservedQTY'),
+          visible: true,
+          minWidth: 200,
+          tooltip: true
+        },
+        /* {
+          prop: 'unqualifiedQTY',
+          label: vm.$t('PURCHASE.unqualifiedQTY'),
+          visible: true,
+          minWidth: 200,
+          tooltip: true
+        }, */
+        {
+          prop: 'inTransitQty',
+          label: vm.$t('PURCHASE.inTransitQTY'),
+          visible: true,
+          minWidth: 200,
+          tooltip: true
+        }
+        // {
+        //   prop: 'picture',
+        //   label: vm.$t('ui.picture'),
+        //   visible: true,
+        //   width: 120
+        // }
+      ],
+      columns2: [
+        {
+          prop: 'productName',
+          label: vm.$t('PURCHASE.productName'),
+          visible: true,
+          minWidth: 200,
+          sortable: 'custom',
+          tooltip: true,
+          fixed: true
+        },
+        {
+          prop: 'internalPartNo',
+          label: vm.$t('PURCHASE.internalPartNo'),
+          visible: true,
+          minWidth: 200,
+          sortable: 'custom',
+          tooltip: true
+        },
+        {
+          prop: 'alias',
+          label: vm.$t('PRODUCT.alias'),
+          visible: true,
+          minWidth: 200,
+          sortable: 'custom',
+          tooltip: true
+        },
+        // {
+        //   prop: 'serviceType',
+        //   propBy: 'serviceTypeStr',
+        //   label: vm.$t('PRODUCT.productType'),
+        //   visible: true,
+        //   minWidth: 200,
+        //   sortable: 'custom',
+        //   tooltip: true
+        // },
+        {
+          prop: 'purchaseUom',
+          label: vm.$t('PURCHASE.uom'),
+          visible: true,
+          minWidth: 200,
+          sortable: 'custom',
+          tooltip: true
+        },
+        // {
+        //   prop: 'valuationAmount',
+        //   label: vm.$t('PURCHASE.unitPrice'),
+        //   visible: true,
+        //   minWidth: 160,
+        //   tooltip: true,
+        //   padding: 50,
+        //   align: 'right'
+        // },
+        // {
+        //   prop: 'valuationCurrency',
+        //   label: vm.$t('ui.currency'),
+        //   minWidth: 200,
+        //   visible: true,
+        //   tooltip: true
+        // },
+        {
+          prop: 'isActive',
+          label: vm.$t('ui.isActive'),
+          minWidth: 160,
+          visible: true,
+          tooltip: true,
+          sortable: 'custom'
+        },
+        {
+          prop: 'description',
+          label: vm.$t('ui.description'),
+          visible: true,
+          minWidth: 200,
+          tooltip: false
+        },
+        {
+          prop: 'remarks',
+          label: vm.$t('ui.remarks'),
+          visible: true,
+          minWidth: 200,
+          tooltip: false
+        }
+      ],
+      // 查询参数
+      queryParams: {
+        pageNum: 1,
+        pageSize: 25,
+        condition: ''
+      },
+      searchData: [
+        {
+          name: 'condition',
+          placeholder: `${this.$t('ui.productSearch')}`,
+          type: 'InputEle'
+        }
+      ],
+      treeList: [],
+      defaultProps: {
+        children: 'child',
+        label: 'categoryName'
+      },
+      /* 已经选择的联系人Id(过滤) */
+      alreadySelectIdList: [],
+      isCollapse: false,
+      activeName: '1',
+      type: 'supplier',
+      filterText: undefined,
+      filteredTreeData: [],
+      defaultExpandAll: false,
+      timeStamp: undefined,
+      defaultExpandedKeys: []
+    }
+  },
+
+  computed: {
+    selectIds() {
+      if (this.activeName === '1') {
+        return this.selectIds1
+      } else {
+        return this.selectIds2
+      }
+    },
+    selectIds1() {
+      return this.selectList1.map((item) => item[this.rowIdKey])
+    },
+    selectIds2() {
+      return this.selectList2.map((item) => item[this.rowIdKey])
+    }
+  },
+  watch: {},
+  created() {
+    this.queryParams.pageSize = this.$$initPageSize(this.saveKey)
+    this.$$initColumnVisible('1', this.columns1)
+    this.$$initColumnVisible('2', this.columns2)
+  },
+  updated() {},
+  methods: {
+    // 处理输入框的过滤逻辑
+    handleFilter() {
+      if (!this.filterText) {
+        this.filteredTreeData = JSON.parse(JSON.stringify(this.treeList)) // 重置为原始数据
+      } else {
+        this.filteredTreeData = this.filterTree(this.treeList, this.filterText.toLowerCase())
+        this.defaultExpandAll = true
+        this.timeStamp = Date.now()
+      }
+    },
+    // 递归过滤树数据
+    filterTree(tree, keyword) {
+      const result = []
+      tree.forEach((node) => {
+        const lowerCaseLabel = node.categoryName.toLowerCase()
+        let newNode = null
+        const matchesByKeyword = keyword && lowerCaseLabel.includes(keyword)
+        const matchesByCategoryId =
+          this.queryParams &&
+          this.queryParams.productCategoryId &&
+          String(node.id) === String(this.queryParams.productCategoryId)
+
+        if (matchesByKeyword || matchesByCategoryId) {
+          result.push(node)
+        } else {
+          const filteredChildren = this.filterTree(node.child || [], keyword)
+          if (filteredChildren.length > 0) {
+            newNode = { ...node, child: filteredChildren }
+          }
+        }
+
+        // 如果当前节点匹配，递归添加所有父级和子级
+        if (newNode) {
+          result.push(newNode)
+        }
+      })
+      return result
+    },
+    handleTabClick() {
+      this.filterText = undefined
+      this.defaultExpandedKeys = []
+      this.resetSearchForm(false)
+      if (this.activeName === '1') {
+        this.columns = this.columns1
+      } else {
+        this.columns = this.columns2
+      }
+      this.searchFormKey = Date.now()
+      this.queryAllProductCategoryTreeList()
+      this.getList()
+    },
+    handleAdd(data = [], type = '') {
+      this.selectList1 = data || []
+      // console.log(this.selectList1, '==============================supper===661')
+      this.queryParams.condition = ''
+      this.queryParams.pageNum = 1
+      this.columns = this.columns1
+      if (!type) {
+        this.queryAllProductCategoryTreeList()
+        this.getList()
+      }
+    },
+    queryAllProductCategoryTreeList() {
+      this.loading = true
+      let queryFn
+      if (this.activeName === '1') {
+        queryFn = queryBusinessSelectProductCategoryTreeList
+      } else {
+        queryFn = queryBusinessSelectServiceCategoryTreeList
+      }
+      queryFn().then((res) => {
+        this.treeList = res.data
+        if (this.defaultExpandedKeys.length === 0) {
+          this.defaultExpandedKeys = this.treeList.length > 0 ? this.treeList.map((x) => x.id) : []
+        }
+        this.handleFilter()
+      })
+    },
+    queryTable() {
+      this.queryParams.isAsc = this.queryParams.orderByColumn = undefined
+      this.$refs.tables.clearSort()
+      this.queryParams.productCategoryId = ''
+      this.$refs.tree && this.$refs.tree.setCurrentKey(null)
+      this.getList()
+    },
+    getList() {
+      const vm = this
+      const param = this.queryParams
+      this.$trimOfObj(param)
+      this.loading = true
+
+      param.businessPartnerIdList = (this.rfqVendorList || []).map((item) => item.businessPartnerId)
+      if (param.businessPartnerIdList.length === 0) {
+        param.businessPartnerIdList = ['-1']
+      }
+
+      param.alreadyProductIdList = []
+      param.selectedIdList = this.$$getSelectedIdList(this.selectIds, this.rowIdKey)
+      const timer = Date.now()
+      this.queryTimer = timer
+      queryRFQCanSelectProductList(param)
+        .then((response) => {
+          if (this.queryTimer !== timer) return
+          this.loading = false
+          this.total = response.total
+          this.filteredSelectedList = this.$$getFilteredSelectedList(response)
+          const rows = response.rows || []
+          if (this.activeName === '2') {
+            rows.forEach((item) => {
+              item.serviceTypeStr = this.selectDictLabel(
+                this.dict.type.service_type,
+                item.serviceType
+              )
+            })
+          }
+          this.tableList = rows
+
+          this.$$getColumnContentMaxWidth(this.columns, this.tableList)
+
+          if (this.activeName === '1') {
+            this.$nextTick(() => {
+              this.selectList1.forEach((row) => {
+                this.tableList.forEach((item, index) => {
+                  if (row[this.rowIdKey] === item[this.rowIdKey]) {
+                    this.$refs.tables.toggleRowSelection(this.tableList[index], true)
+                  }
+                })
+              })
+            })
+          } else {
+            this.$nextTick(() => {
+              this.selectList2.forEach((row) => {
+                this.tableList.forEach((item, index) => {
+                  if (row[this.rowIdKey] === item[this.rowIdKey]) {
+                    this.$refs.tables.toggleRowSelection(this.tableList[index], true)
+                  }
+                })
+              })
+            })
+          }
+        })
+        .catch((err) => {
+          vm.loading = false
+          window.console.error(err)
+        })
+    },
+    // 节点单击事件
+    handleNodeClick(data) {
+      this.queryParams.condition = undefined
+      if (this.filterText) {
+        // this.filterText = undefined
+        // this.handleFilter()
+        this.defaultExpandAll = false
+        this.defaultExpandedKeys = this.findParentIds(this.treeList, data.id)
+        this.timeStamp = Date.now()
+      }
+      this.$set(this.queryParams, 'productCategoryId', data.id)
+      this.getList()
+    },
+    findParentIds(tree, targetId) {
+      // 定义递归函数
+      function dfs(node, path) {
+        // 将当前节点的 id 添加到路径中
+        path.push(node.id)
+
+        // 如果找到目标 id，返回路径
+        if (node.id === targetId) {
+          return path
+        }
+
+        // 如果有子节点，递归遍历
+        if (node.child && node.child.length > 0) {
+          for (const child of node.child) {
+            const result = dfs(child, [...path]) // 递归调用，传入当前路径的副本
+            if (result) {
+              return result // 找到目标 id 后返回结果
+            }
+          }
+        }
+
+        // 如果未找到目标 id，返回 null
+        return null
+      }
+
+      // 遍历树的每个根节点
+      for (const root of tree) {
+        const result = dfs(root, [])
+        if (result) {
+          return result // 找到目标 id 后返回结果
+        }
+      }
+
+      // 如果未找到目标 id，返回空数组
+      return []
+    },
+    selectable(row, rowIndex) {
+      return true // 不禁用
+    },
+    handleSelectAll(selection) {
+      const vm = this
+      if (this.activeName === '1') {
+        if (selection.length) {
+          // 去重添加
+          const curSelectedIds = this.selectList1.map((d) => d[this.rowIdKey])
+          selection.forEach((item) => {
+            if (!curSelectedIds.includes(item[this.rowIdKey])) {
+              vm.selectList1.push(item)
+            }
+          })
+        } else {
+          // 删除table中在selection 中缓存的内容
+          const delArr = this.tableList.map((item) => item[this.rowIdKey])
+          const list = vm.selectList1.filter((item) => !delArr.includes(item[this.rowIdKey]))
+          vm.selectList1.length = 0
+          vm.selectList1.push(...list)
+        }
+      }
+      if (this.activeName === '2') {
+        if (selection.length) {
+          // 去重添加
+          const curSelectedIds = this.selectList2.map((d) => d[this.rowIdKey])
+          selection.forEach((item) => {
+            if (!curSelectedIds.includes(item[this.rowIdKey])) {
+              vm.selectList2.push(item)
+            }
+          })
+        } else {
+          // 删除table中在selection 中缓存的内容
+          const delArr = this.tableList.map((item) => item[this.rowIdKey])
+          vm.selectList2 = vm.selectList2.filter((item) => !delArr.includes(item[this.rowIdKey]))
+        }
+      }
+    },
+    // 有则删除，无则添加
+    handleSelectionChange(selection, row) {
+      const vm = this
+      if (this.activeName === '1') {
+        for (let i = 0; i < vm.selectList1.length; i++) {
+          if (vm.selectList1[i][this.rowIdKey] === row[this.rowIdKey]) {
+            return vm.selectList1.splice(i, 1)
+          }
+        }
+        vm.selectList1.push(row)
+      }
+      if (this.activeName === '2') {
+        for (let i = 0; i < vm.selectList2.length; i++) {
+          if (vm.selectList2[i][this.rowIdKey] === row[this.rowIdKey]) {
+            return vm.selectList2.splice(i, 1)
+          }
+        }
+        vm.selectList2.push(row)
+      }
+    },
+    handleRowClick(row, col) {
+      if (col && col.property === 'picture') {
+        return
+      }
+      if (this.activeName === '1') {
+        const index = this.selectList1.findIndex(
+          (item) => item[this.rowIdKey] === row[this.rowIdKey]
+        )
+        const isSelected = index > -1
+        if (isSelected) {
+          this.selectList1.splice(index, 1)
+        } else {
+          this.selectList1.push(row)
+        }
+        this.$refs.tables.toggleRowSelection(row, !isSelected)
+      }
+      if (this.activeName === '2') {
+        const index = this.selectList2.findIndex(
+          (item) => item[this.rowIdKey] === row[this.rowIdKey]
+        )
+        const isSelected = index > -1
+        if (isSelected) {
+          this.selectList2.splice(index, 1)
+        } else {
+          this.selectList2.push(row)
+        }
+        this.$refs.tables.toggleRowSelection(row, !isSelected)
+      }
+    },
+    handleBack() {
+      const vm = this
+      vm.visible = false
+    },
+    /** 搜索 */
+    handleSearchForm() {
+      this.queryParams.pageNum = 1
+      this.filterText = this.queryParams.condition
+      this.handleFilter()
+      this.getList()
+    },
+    /** 重置 */
+    resetSearchForm(isGetList = true) {
+      const { pageSize } = this.queryParams
+      this.queryParams = { pageNum: 1, pageSize }
+      this.$refs.tables && this.$refs.tables.clearSort()
+      if (isGetList) {
+        this.getList()
+      }
+    },
+    closed() {
+      this.isCollapse = false
+      this.selectList1 = []
+      this.selectList2 = []
+      this.tableList = []
+      // this.$refs.tables.clearSelection()
+      this.$refs.tree.setCheckedKeys([])
+    },
+    submit() {
+      // if (this.btnLoading) return
+      // this.btnLoading = true
+      // setTimeout(() => {
+      //   this.btnLoading = false
+      // }, 2000)
+      const arr = this.selectList1.concat(this.selectList2)
+      return arr
+      // this.$emit('onSuccess', arr)
+      // this.$emit('onSuccess', this.selectList)
+      // this.visible = false
+    }
+  }
+}
+</script>
+
+<style lang="scss" scoped>
+.txt-color {
+  color: #f66c6c !important;
+}
+
+.tree-box {
+  flex-shrink: 0;
+  position: relative;
+  max-height: 600px;
+  margin-right: 20px;
+  //  transition: width 0.28s;
+  border: 1px solid #ccc;
+}
+.tree {
+  min-height: 200px;
+  max-height: 500px;
+  overflow: hidden auto;
+  border-radius: 5px;
+}
+.collapse-warp {
+  position: absolute;
+  top: 50%;
+  right: -4px;
+  z-index: 300;
+  font-size: 16px;
+  // background-color: #888;
+  // right: 100%;
+  // border: 1px solid #000;
+  background-color: #fff;
+  border-radius: 4px;
+}
+.tree::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+  background-color: initial;
+}
+
+.tree::-webkit-scrollbar-thumb {
+  border-radius: 4px;
+  background-color: rgba(127, 135, 146, 0.5);
+}
+
+.tree::-webkit-scrollbar-track {
+  width: 10px;
+  box-shadow: none;
+  border-radius: 0;
+  background-color: initial;
+}
+</style>
